@@ -80,9 +80,8 @@ async def cmd_baklol(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=random.choice(baklol_lines))
 
 async def cmd_gyan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Baklol Baba bolte hain:
-{random.choice(gyan_lines)}")
-
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Baklol Baba bolte hain:\n" + random.choice(gyan_lines))
+    
 async def cmd_sad(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=random.choice(sad_lines))
 
