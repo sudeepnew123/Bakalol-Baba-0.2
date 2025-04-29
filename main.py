@@ -1,9 +1,9 @@
-
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters, CommandHandler
 import random
 import os
 
+# Baklol Baba ki paathshala
 baklol_lines = [
     "Beta, zindagi ek golgappa hai... kabhi teekha, kabhi meetha!",
     "Jo soya, woh roya... aur jo padha, woh bhi roya.",
@@ -60,16 +60,17 @@ breakup_lines = [
     "Woh ab kisi aur ke 'good morning' ka reply hai..."
 ]
 
+# Mention pe Baklol Baba bole
 async def handle_mention(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message and context.bot.id in [e.user.id for e in update.message.entities if e.type == 'mention']:
+    if f"@{context.bot.username.lower()}" in update.message.text.lower():
         await context.bot.send_message(chat_id=update.effective_chat.id, text=random.choice(baklol_lines))
 
+# Commands
 async def cmd_baklol(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=random.choice(baklol_lines))
 
 async def cmd_gyan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Baklol Baba bolte hain:
-" + random.choice(gyan_lines))
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Baklol Baba bolte hain:\n" + random.choice(gyan_lines))
 
 async def cmd_sad(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=random.choice(sad_lines))
@@ -77,30 +78,38 @@ async def cmd_sad(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cmd_breakup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=random.choice(breakup_lines))
 
+# Gadha detection
 async def detect_gadha(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.lower()
     if any(word in text for word in ["gc ka gadha", "gc ka pagal", "gc ka ladki baj"]):
         if update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
             tag = text.split("gc ka ")[-1].split()[0]
-            await context.bot.send_photo(
-                chat_id=update.effective_chat.id,
-                photo=target.photo.big_file_id if target.photo else None,
-                caption=f"Congratulations!
-Aaj ka {tag} hai:
-@{target.username or target.first_name}!"
-            )
+            photos = await context.bot.get_user_profile_photos(target.id, limit=1)
+            if photos.total_count > 0:
+                file_id = photos.photos[0][0].file_id
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=file_id,
+                    caption=f"**Congratulations!**\nAaj ka {tag} hai:\n@{target.username or target.first_name}!"
+                )
+            else:
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=f"Aaj ka {tag} hai: @{target.username or target.first_name}!\n(Par profile pic nahi mila!)"
+                )
 
 def main():
     TOKEN = os.getenv("BOT_TOKEN")
     app = ApplicationBuilder().token(TOKEN).build()
 
-    app.add_handler(MessageHandler(filters.TEXT & filters.REPLY, detect_gadha))
     app.add_handler(CommandHandler("baklol", cmd_baklol))
     app.add_handler(CommandHandler("gyan", cmd_gyan))
     app.add_handler(CommandHandler("sad", cmd_sad))
     app.add_handler(CommandHandler("breakup", cmd_breakup))
-    app.add_handler(MessageHandler(filters.Entity("mention"), handle_mention))
+
+    app.add_handler(MessageHandler(filters.TEXT & filters.REPLY, detect_gadha))
+    app.add_handler(MessageHandler(filters.TEXT, handle_mention))
 
     print("Baklol Baba is live!")
     app.run_polling()
